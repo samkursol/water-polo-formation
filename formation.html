@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Water Polo Formation - Coach Slobo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      color: #0055A5;
+    }
+    .pool {
+      position: relative;
+      width: 600px;
+      height: 400px;
+      margin: 20px auto;
+      background-color: #87CEEB;
+      border: 2px solid #000;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .position {
+      position: absolute;
+      width: 30px; /* Reduced size */
+      height: 30px; /* Reduced size */
+      line-height: 30px; /* Adjusted for new size */
+      text-align: center;
+      background-color: #fff;
+      border: 2px solid #000;
+      border-radius: 50%;
+      cursor: move;
+      font-weight: bold;
+      font-size: 12px; /* Smaller font for smaller circle */
+      user-select: none;
+    }
+    .offense { background-color: #FFD700; } /* Gold for offensive players */
+    .defense { background-color: #FF6347; } /* Red for defensive players */
+    .position:hover { background-color: #d3d3d3; }
+    #ball {
+      position: absolute;
+      width: 15px; /* Slightly smaller to match player size reduction */
+      height: 15px;
+      background-color: #FF4500; /* Orange for the ball */
+      border-radius: 50%;
+      cursor: move;
+    }
+    #goal {
+      position: absolute;
+      width: 150px;
+      height: 50px;
+      top: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #000;
+      border: 3px solid #fff;
+      border-radius: 5px;
+      text-align: center;
+      line-height: 50px;
+      color: #fff;
+      font-weight: bold;
+      font-size: 18px;
+      user-select: none;
+    }
+    #info {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      display: none;
+    }
+    button {
+      margin: 10px;
+      padding: 5px 10px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #0055A5;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    button:hover {
+      background-color: #003d7a;
+    }
+    svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    .line {
+      stroke: #000;
+      stroke-width: 2;
+      stroke-dasharray: 5,5; /* Dashed line for movement */
+    }
+  </style>
+</head>
+<body>
+  <h1>Water Polo Formation - Coach Slobo</h1>
+  <button onclick="resetPositions()">Reset Positions</button>
+  <button onclick="clearLines()">Clear Lines</button>
+  <div class="pool">
+    <svg id="lines"></svg>
+    <div id="goal">Goal</div>
+    <!-- Offensive Positions with your arranged positions -->
+    <div id="O1" class="position offense" style="top: 300px; left: 50px;">O1</div>
+    <div id="O2" class="position offense" style="top: 300px; left: 200px;">O2</div>
+    <div id="O3" class="position offense" style="top: 300px; left: 350px;">O3</div>
+    <div id="O4" class="position offense" style="top: 200px; left: 50px;">O4</div>
+    <div id="O5" class="position offense" style="top: 200px; left: 200px;">O5</div>
+    <div id="O6" class="position offense" style="top: 200px; left: 350px;">O6</div>
+
+    <!-- Defensive Positions with your arranged positions -->
+    <div id="X1" class="position defense" style="top: 50px; left: 100px;">X1</div>
+    <div id="X2" class="position defense" style="top: 50px; left: 250px;">X2</div>
+    <div id="X3" class="position defense" style="top: 50px; left: 400px;">X3</div>
+    <div id="X4" class="position defense" style="top: 150px; left: 100px;">X4</div>
+    <div id="X5" class="position defense" style="top: 150px; left: 400px;">X5</div>
+
+    <!-- Ball -->
+    <div id="ball" style="top: 250px; left: 300px;"></div>
+  </div>
+  <div id="info"></div>
+
+  <script>
+    const positions = {
+      O1: "O1 - Left Wing: Moves along the left side for quick passes and shots.",
+      O2: "O2 - Left Flat: Shifts to the left-center, sets up plays or takes mid-range shots.",
+      O3: "O3 - Right Flat: Moves to the right-center, mirrors O2 on the right.",
+      O4: "O4 - Left Point: Adjusts deeper on the left, supports defense and transitions.",
+      O5: "O5 - Right Point: Shifts deeper on the right, aids defense and transitions.",
+      O6: "O6 - Right Wing: Moves along the right for quick shots and passes.",
+      X1: "X1 - Left Wing Defender: Follows O1, blocks shots from the left wing.",
+      X2: "X2 - Center Defender: Moves to guard the center, marks the hole player.",
+      X3: "X3 - Right Wing Defender: Tracks O6, prevents shots from the right wing.",
+      X4: "X4 - Left Point Defender: Moves with O4, supports left-side defense.",
+      X5: "X5 - Right Point Defender: Adjusts with O5, supports right-side defense."
+    };
+
+    // Store initial positions (based on your arrangement)
+    const initialPositions = {
+      O1: { top: 300, left: 50 },
+      O2: { top: 300, left: 200 },
+      O3: { top: 300, left: 350 },
+      O4: { top: 200, left: 50 },
+      O5: { top: 200, left: 200 },
+      O6: { top: 200, left: 350 },
+      X1: { top: 50, left: 100 },
+      X2: { top: 50, left: 250 },
+      X3: { top: 50, left: 400 },
+      X4: { top: 150, left: 100 },
+      X5: { top: 150, left: 400 },
+      ball: { top: 250, left: 300 }
+    };
+
+    // Fluid dragging for positions and ball
+    let draggedItem = null;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    document.querySelectorAll('.position, #ball').forEach(item => {
+      item.addEventListener('mousedown', startDragging);
+      item.addEventListener('click', handlePositionClick);
+    });
+
+    const pool = document.querySelector('.pool');
+    pool.addEventListener('mousemove', drag);
+    pool.addEventListener('mouseup', stopDragging);
+    pool.addEventListener('click', handlePoolClick);
+
+    function startDragging(e) {
+      e.preventDefault();
+      draggedItem = e.target;
+      const rect = draggedItem.getBoundingClientRect();
+      offsetX = e.clientX - rect.left;
+      offsetY = e.clientY - rect.top;
+    }
+
+    function drag(e) {
+      if (!draggedItem) return;
+
+      const poolRect = pool.getBoundingClientRect();
+      const x = e.clientX - poolRect.left - offsetX;
+      const y = e.clientY - poolRect.top - offsetY;
+
+      // Keep within pool boundaries
+      const maxX = pool.offsetWidth - draggedItem.offsetWidth;
+      const maxY = pool.offsetHeight - draggedItem.offsetHeight;
+      draggedItem.style.left = Math.max(0, Math.min(x, maxX)) + 'px';
+      draggedItem.style.top = Math.max(0, Math.min(y, maxY)) + 'px';
+    }
+
+    function stopDragging() {
+      draggedItem = null;
+    }
+
+    // Handle position click to start line drawing
+    let firstPosition = null;
+
+    function handlePositionClick(e) {
+      e.stopPropagation(); // Prevent pool click event from firing
+      const position = e.target;
+      const infoDiv = document.getElementById('info');
+      infoDiv.style.display = 'block';
+      infoDiv.innerHTML = positions[position.id] || "No description available.";
+
+      if (!firstPosition) {
+        firstPosition = position;
+        position.style.border = '2px solid #00FF00'; // Highlight first position in green
+      } else {
+        firstPosition.style.border = '2px solid #000'; // Reset first position border
+        firstPosition = null;
+      }
+    }
+
+    // Handle pool click to draw line to a space
+    function handlePoolClick(e) {
+      if (!firstPosition) return; // Do nothing if no position is selected
+
+      const rect = pool.getBoundingClientRect();
+      const x2 = e.clientX - rect.left;
+      const y2 = e.clientY - rect.top;
+
+      // Ensure click is within pool boundaries
+      if (x2 < 0 || x2 > pool.offsetWidth || y2 < 0 || y2 > pool.offsetHeight) return;
+
+      const x1 = parseFloat(firstPosition.style.left) + (firstPosition.offsetWidth / 2);
+      const y1 = parseFloat(firstPosition.style.top) + (firstPosition.offsetHeight / 2);
+
+      drawLine(x1, y1, x2, y2);
+      firstPosition.style.border = '2px solid #000'; // Reset first position border
+      firstPosition = null;
+    }
+
+    // Draw line from player to space
+    function drawLine(x1, y1, x2, y2) {
+      const svg = document.getElementById('lines');
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', x1);
+      line.setAttribute('y1', y1);
+      line.setAttribute('x2', x2);
+      line.setAttribute('y2', y2);
+      line.setAttribute('class', 'line');
+      svg.appendChild(line);
+    }
+
+    // Clear lines
+    function clearLines() {
+      const svg = document.getElementById('lines');
+      svg.innerHTML = '';
+      firstPosition = null;
+      document.querySelectorAll('.position').forEach(pos => {
+        pos.style.border = '2px solid #000'; // Reset all borders
+      });
+    }
+
+    // Reset positions
+    function resetPositions() {
+      document.querySelectorAll('.position, #ball').forEach(item => {
+        const id = item.id;
+        item.style.top = initialPositions[id].top + 'px';
+        item.style.left = initialPositions[id].left + 'px';
+      });
+      const infoDiv = document.getElementById('info');
+      infoDiv.style.display = 'none';
+      clearLines();
+    }
+  </script>
+</body>
+</html>
